@@ -1,0 +1,131 @@
+========================================================================
+PORTFOLIX COMPASS - GEMINI AI/ML QUICK START
+========================================================================
+
+⏱️  5 MINUTES TO WORKING AI/ML SYSTEM
+
+STEP 1: Copy API Key Template
+  $ cp .env.example.gemini .env
+
+STEP 2: Run Setup Script
+  $ bash scripts/setup-aiml.sh
+
+STEP 3: Get & Add Gemini API Key
+  1. Visit: https://aistudio.google.com/api-keys
+  2. Create project "Portfolix Compass"
+  3. Copy API key
+  4. Edit .env and paste key:
+     GEMINI_API_KEY=your_key_here
+
+STEP 4: Update server.js
+  Add this line (around line 28):
+  app.use('/api/aiml', require('./routes/aiml.routes'));
+
+STEP 5: Install & Start
+  $ npm install @google/generative-ai node-cache
+  $ npm run dev
+
+STEP 6: Test
+  $ curl http://localhost:5000/api/aiml/health \
+    -H "Authorization: Bearer YOUR_TOKEN"
+
+========================================================================
+FILES CREATED IN REPO:
+========================================================================
+✅ src/services/aiml.service.js      - Core AI/ML logic
+✅ src/routes/aiml.routes.js         - 12 API endpoints
+✅ GEMINI_AI_ML_SETUP.md             - Complete guide
+✅ .env.example.gemini               - Environment template
+✅ scripts/setup-aiml.sh             - Automated setup
+✅ QUICK_START.txt                   - This file
+✅ API_REFERENCE.md                  - Endpoint docs
+✅ TROUBLESHOOTING.md                - Common issues
+✅ POSTMAN_COLLECTION.json           - API testing
+✅ TEST_ENDPOINTS.sh                 - Test all APIs
+✅ .gitignore update                 - Secure .env
+
+========================================================================
+12 AI/ML FEATURES INCLUDED:
+========================================================================
+1.  Salary Prediction & Analysis
+2.  Offer Letter Generation
+3.  Salary Slip Summarization
+4.  Compensation Parity Analysis
+5.  Tax Optimization (Kerala-focused)
+6.  Payroll Anomaly Detection
+7.  Employee Insights & Analytics
+8.  Performance Recommendations
+9.  Compliance Checking
+10. Market Benchmarking
+11. Bulk Payroll Analysis
+12. Health Check Endpoint
+
+========================================================================
+API ENDPOINT EXAMPLES:
+========================================================================
+
+1. SALARY PREDICTION
+   POST /api/aiml/salary/predict
+   Body: { employeeId, currentSalary, experience, performanceRating }
+
+2. OFFER LETTER
+   POST /api/aiml/documents/offer-letter
+   Body: { name, position, salary, joiningDate }
+
+3. TAX OPTIMIZATION
+   POST /api/aiml/tax/optimize-strategy
+   Body: { employeeId, annualSalary, age }
+
+4. ANOMALY DETECTION
+   POST /api/aiml/payroll/detect-anomalies
+   Body: { employees: [...] }
+
+5. MARKET BENCHMARK
+   POST /api/aiml/compensation/market-benchmark
+   Body: { role, location, experience }
+
+========================================================================
+KEY CONFIGURATIONS IN .env:
+========================================================================
+GEMINI_API_KEY=your_key
+GEMINI_MODEL=gemini-pro
+CACHE_TTL=900
+CACHE_ENABLED=true
+NODE_ENV=development
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/portfolix-compass
+
+========================================================================
+TROUBLESHOOTING:
+========================================================================
+"GEMINI_API_KEY not found"
+  → Check .env exists in project root
+
+"Module not found: @google/generative-ai"
+  → Run: npm install @google/generative-ai node-cache
+
+"401 Unauthorized"
+  → All endpoints require JWT token in Authorization header
+
+"Cannot find setup script"
+  → Ensure you're in project root directory
+
+========================================================================
+DOCUMENTATION:
+========================================================================
+• Full Guide:       GEMINI_AI_ML_SETUP.md
+• API Reference:    API_REFERENCE.md
+• Troubleshooting:  TROUBLESHOOTING.md
+• Testing:          TEST_ENDPOINTS.sh
+• Postman:          POSTMAN_COLLECTION.json
+
+========================================================================
+SUPPORT:
+========================================================================
+Google Gemini API: https://ai.google.dev/
+GitHub Issues:     Use project issues for bugs
+Team Contact:      Your AI/ML Engineer
+
+========================================================================
+Version: 1.0.0 | Status: Production Ready | Date: Dec 2, 2025
+========================================================================
