@@ -13,8 +13,8 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Database Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolix-compass', {
-  useNewUrlParser: true,
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolix-compass';
+mongoose.connect(mongoUri, {  useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(() => {
   console.log('✓ Connected to MongoDB');
