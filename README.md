@@ -24,6 +24,8 @@
 - [Deployment](#-deployment)
 - [Documentation](#-documentation)
 - [Support](#-support)
+- [AI/ML Integration - Gemini](#aiml-integration---gemini)
+- [ERM Integration](#erm-integration-employee-resource-management)
 
 ---
 
@@ -388,5 +390,58 @@ Proprietary - © 2025 Portfolio Builders. All rights reserved.
 
 **Quick Links**:
 - 🔗 [Frontend Repository](https://github.com/portfoliobuilders/portfolix-compass-frontend)
+
+---
+
+## 🔄 ERM Integration (Employee Resource Management)
+
+### Overview
+The Portfolix Compass Backend now includes a comprehensive Employee Resource Management (ERM) system with bidirectional sync capabilities. This integration connects ERM data (Attendance, Tasks, Leaves) with the Compass payroll system for seamless employee management and compensation calculations.
+
+### Key Features
+- **Attendance Tracking**: Check-in/out, work hours calculation, automated reports
+- **Task Management**: Create, assign, track tasks with status updates and progress monitoring
+- **Leave Management**: Request, approve/reject leaves with automatic balance calculations
+- **Bidirectional Sync**: Real-time data synchronization between ERM and Compass systems
+- **Webhook Support**: Event-driven sync for immediate data updates
+- **Batch Processing**: Efficient bulk sync for large datasets
+
+### ERM Modules
+1. **Attendance Module** - Track employee work hours and attendance patterns
+2. **Task Management** - Assign and monitor employee tasks with deadlines
+3. **Leave Management** - Handle leave requests and approvals
+
+### API Endpoints
+Total 18 ERM endpoints:
+- **4 Attendance** endpoints (check-in/out, reports, manual updates)
+- **4 Task** endpoints (create, update, list, overdue)
+- **4 Leave** endpoints (request, approve, pending, balance)
+- **6 Sync** endpoints (manual sync, webhooks, status monitoring)
+
+### Setup
+1. Copy `.env.example.erm` to `.env` and configure settings
+2. Run Prisma migrations: `npx prisma migrate dev`
+3. Start the server: `npm start`
+4. Access ERM endpoints at `/api/erm/*`
+
+### Configuration
+See `.env.example.erm` for 40+ environment variables including:
+- Database connection settings
+- Compass API integration parameters
+- Sync configuration (interval, batch size, retries)
+- Webhook settings
+- Feature flags
+
+### Documentation
+- Service Layer: `src/services/erm.service.js` (12 functions)
+- Sync Service: `src/services/erm-sync.service.js` (6 functions)
+- Routes: `src/routes/erm.routes.js` (18 endpoints)
+- Database Models: `prisma/erm-models.prisma`
+
+### Sync Capabilities
+- **Direction**: Pull, Push, or Bidirectional
+- **Trigger**: Manual API calls or automatic webhook events
+- **Retry Logic**: Configurable retry attempts with exponential backoff
+- **Logging**: Comprehensive sync logs and error tracking
 - 📝 [Frontend README](../portfolix-compass-frontend/README.md)
 - 🚀 [Go-Live Checklist](../portfolix-compass-frontend/GO_LIVE_LAUNCH_CHECKLIST.md)
