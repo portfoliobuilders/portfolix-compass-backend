@@ -1,0 +1,143 @@
+// ========== ATTENDANCE MODEL ==========
+model Attendance {
+  id                String    @id @default(cuid())
+  employeeId        String
+  employee          Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date              DateTime  @db.Date
+  checkInTime       DateTime?
+  checkOutTime      DateTime?
+  workHours         Decimal   @default(0) @db.Decimal(5, 2)
+  breakMinutes      Int       @default(0)
+  status            String    @default("present") // present, absent, halfday, leave
+  notes             String?
+  manuallyCorrected Boolean   @default(false)
+  correctionReason  String?
+  correctedBy       String?
+  correctedAt       DateTime?
+  syncStatus        String    @default("synced") // synced, pending, failed
+  lastSyncedAt      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([employeeId, date])
+  @@index([employeeId])
+  @@index([date])
+  @@index([syncStatus])
+}
+
+// ========== TASK MODEL ==========
+model Task {
+  id                String    @id @default(cuid())
+  title             String
+  description       String    @db.Text
+  projectId         String?
+  assigneeId        String
+  assignee          Employee  @relation("AssignedTasks", fields: [assigneeId], references: [id], onDelete: Cascade)
+  reportingToId     String?
+  reportingTo       Employee? @relation("SupervisedTasks", fields: [reportingToId], references: [id], onDelete: SetNull)
+  priority          String    @default("medium") // high, medium, low
+  status            String    @default("open") // open, in_progress, completed, on_hold, cancelled
+  startDate         DateTime  @db.Date
+  dueDate           DateTime  @db.Date
+  completedDate     DateTime? @db.Date
+  estimatedHours    Decimal   @default(0) @db.Decimal(8, 2)
+  actualHours       Decimal   @default(0) @db.Decimal(8, 2)
+  progressPercent   Int       @default(0)
+  attachments       String    @default("[]") // JSON array of file URLs
+  comments          String    @default("[]") // JSON array of comments
+  syncStatus        String    @default("synced") // synced, pending, failed
+  lastSyncedAt      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  createdBy         String?
+
+  @@index([assigneeId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([syncStatus])
+}
+
+// ========== LEAVE MODEL ==========
+model Leave {
+  id                String    @id @default(cuid())
+  employeeId        String
+  employee          Employee  @relation("EmployeeLeaves", fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType         String    // annual, sick, personal, maternity, sabbatical, etc.
+  startDate         DateTime  @db.Date
+  endDate           DateTime  @db.Date
+  totalDays         Decimal   @db.Decimal(5, 2)
+  reason            String    @db.Text
+  attachments       String    @default("[]") // JSON array of file URLs
+  status            String    @default("pending") // pending, approved, rejected, cancelled
+  approverId        String?
+  approver          Employee? @relation("ApprovedLeaves", fields: [approverId], references: [id], onDelete: SetNull)
+  approvalDate      DateTime?
+  approvalComments  String?
+  halfDayType       String?   // first_half, second_half (if half day)
+  isHalfDay         Boolean   @default(false)
+  syncStatus        String    @default("synced") // synced, pending, failed
+  lastSyncedAt      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([startDate])
+  @@index([approverId])
+  @@index([syncStatus])
+}
+
+// ========== ERM SYNC LOG MODEL ==========
+model ERMSyncLog {
+  id                String    @id @default(cuid())
+  syncType          String    // attendance, task, leave, employee
+  direction         String    // push, pull, bidirectional
+  status            String    // success, failed, partial
+  recordsProcessed  Int       @default(0)
+  recordsFailed     Int       @default(0)
+  errorMessage      String?
+  sourceSystem      String    // erm, compass
+  destinationSystem String    // compass, erm
+  startTime         DateTime  @default(now())
+  endTime           DateTime?
+  duration          Int?      // in milliseconds
+  syncBatchId       String?   // to group related syncs
+  metadata          String    @default("{}") // JSON object for additional info
+  createdAt         DateTime  @default(now())
+
+  @@index([syncType])
+  @@index([status])
+  @@index([startTime])
+  @@index([syncBatchId])
+}
+
+// ========== WEBHOOK EVENT LOG MODEL ==========
+model WebhookEventLog {
+  id                String    @id @default(cuid())
+  eventType         String    // attendance.checkin, task.created, leave.approved, etc.
+  entityType        String    // attendance, task, leave, employee
+  entityId          String
+  action            String    // created, updated, deleted
+  previousData      String?   @db.Text // JSON of previous state
+  currentData       String?   @db.Text // JSON of current state
+  sourceSystem      String    // erm or compass
+  status            String    @default("pending") // pending, delivered, failed
+  retryCount        Int       @default(0)
+  maxRetries        Int       @default(3)
+  nextRetryAt       DateTime?
+  metadata          String    @default("{}") // JSON object
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([eventType])
+  @@index([status])
+  @@index([sourceSystem])
+  @@index([createdAt])
+}
+
+// Add these relations to the Employee model:
+// tasks Task[] @relation("AssignedTasks")
+// supervisedTasks Task[] @relation("SupervisedTasks")
+// attendance Attendance[]
+// leaves Leave[] @relation("EmployeeLeaves")
+// approvedLeaves Leave[] @relation("ApprovedLeaves")
