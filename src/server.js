@@ -26,7 +26,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolix
 // Routes
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/employees', require('./routes/employee.routes'));
-app.use('/api/salary-slips', require('./routes/salarySli p.routes'));
+app.use('/api/salary-slips', require('./routes/salary-slip.routes'));
 app.use('/api/payroll', require('./routes/payroll.routes'));
 app.use('/api/offer-letters', require('./routes/offerLetter.routes'));
 app.use('/api/tax-config', require('./routes/taxConfig.routes'));
