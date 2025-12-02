@@ -1,0 +1,145 @@
+version: '3.8'
+
+services:
+  # Application Server
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portfolix-compass-api
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/portfolix-compass
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-change_this_secret_in_production}
+      - JWT_EXPIRY=${JWT_EXPIRY:-24h}
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - ./logs:/app/logs
+      - ./src:/app/src  # For development hot-reload
+    networks:
+      - portfolix-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MongoDB Database
+  mongo:
+    image: mongo:7.0
+    container_name: portfolix-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-admin123}
+      - MONGO_INITDB_DATABASE=portfolix-compass
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - portfolix-network
+    restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: portfolix-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - redis-data:/data
+    networks:
+      - portfolix-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # MongoDB Express (Optional - for development)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: portfolix-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USER:-admin}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD:-admin123}
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:admin123@mongo:27017/
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:-admin123}
+    depends_on:
+      - mongo
+    networks:
+      - portfolix-network
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  # Redis Commander (Optional - for development)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: portfolix-redis-commander
+    ports:
+      - "8082:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:${REDIS_PASSWORD:-redis123}
+    depends_on:
+      - redis
+    networks:
+      - portfolix-network
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  # NGINX (Optional - for production)
+  nginx:
+    image: nginx:alpine
+    container_name: portfolix-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - portfolix-network
+    restart: unless-stopped
+    profiles:
+      - production
+
+networks:
+  portfolix-network:
+    driver: bridge
+    name: portfolix-network
+
+volumes:
+  mongo-data:
+    driver: local
+    name: portfolix-mongo-data
+  mongo-config:
+    driver: local
+    name: portfolix-mongo-config
+  redis-data:
+    driver: local
+    name: portfolix-redis-data
