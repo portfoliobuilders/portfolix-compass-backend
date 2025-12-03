@@ -1,6 +1,9 @@
-// Prisma schema for Portfolix Compass Backend
-// Database: PostgreSQL
-// Generated with: prisma init
+// Prisma schema for Portfolix Compass Backend - ERM ONLY
+// Database: PostgreSQL (ERM Module)
+// CRITICAL ARCHITECTURE DECISION:
+// - MongoDB handles: Users, Employees, Company, Departments, Payroll, Offer Letters, SalaryStructures
+// - PostgreSQL/Prisma handles: Attendance, Tasks, Leaves, Sync Logs
+// This separation eliminates dual-database conflicts and ensures data consistency
 
 generator client {
   provider = "prisma-client-js"
@@ -12,362 +15,217 @@ datasource db {
 }
 
 // ============================================
-// USER & AUTHENTICATION
+// NOTE: User management is MONGODB ONLY
+// See: src/models/User.js (Mongoose schema)
+// Prisma does NOT manage users
+// Authentication happens via MongoDB
 // ============================================
 
-model User {
-  id        String   @id @default(cuid())
-  companyId String
-  company   Company  @relation(fields: [companyId], references: [id])
-  email     String   @unique
-  passwordHash String
-  fullName  String?
-  role      UserRole @default(VIEWER)
-  employeeId String? @unique
-  employee  Employee? @relation(fields: [employeeId], references: [id])
-  lastLogin DateTime?
-  loginAttempts Int @default(0)
-  isLocked  Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isActive  Boolean @default(true)
-  auditLogs AuditLog[]
-  
-  @@unique([companyId, email])
-}
-
-enum UserRole {
-  ADMIN
-  HR_MANAGER
-  FINANCE
-  MANAGER
-  VIEWER
-}
-
 // ============================================
-// COMPANY & ORGANIZATION
+// ERM SYSTEM - Attendance Management
 // ============================================
-
-model Company {
-  id                String @id @default(cuid())
-  name              String @unique
-  registrationNumber String?
-  address           String?
-  city              String?
-  state             String?
-  country           String?
-  gstNumber         String?
-  panNumber         String?
-  financialYearStart Int @default(4) // Month (1-12)
-  complianceRegion  String @default("Kerala")
-  logoUrl           String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  isActive          Boolean @default(true)
+model Attendance {
+  id            String   @id @default(cuid())
+  mongoUserId   String   // Reference to MongoDB user (ObjectId as String)
+  mongoEmployeeId String // Reference to MongoDB employee
   
-  users             User[]
-  departments       Department[]
-  employees         Employee[]
-  salaryStructures  SalaryStructure[]
-  payrollRecords    PayrollRecord[]
-  offerLetters      OfferLetter[]
-  ptSlabs           PTSlab[]
-  auditLogs         AuditLog[]
+  checkInTime   DateTime
+  checkOutTime  DateTime?
+  workHours     Float    @default(0) // Calculated hours
+  status        AttendanceStatus @default(PRESENT)
+  notes         String?
+  location      String?
+  ipAddress     String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Sync metadata
+  lastSyncedAt  DateTime?
+  syncAttempts  Int      @default(0)
+  isSynced      Boolean  @default(false)
+  
+  @@index([mongoUserId])
+  @@index([mongoEmployeeId])
+  @@index([createdAt])
+  @@unique([mongoEmployeeId, checkInTime])
 }
 
-model Department {
-  id        String @id @default(cuid())
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id])
-  name      String
-  description String?
-  headId    String?
-  budget    Decimal? @db.Decimal(12, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  employees Employee[]
-  
-  @@unique([companyId, name])
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LEAVE
+  HOLIDAY
+  SICK_LEAVE
 }
 
 // ============================================
-// EMPLOYEE MANAGEMENT
+// ERM SYSTEM - Task Management
 // ============================================
-
-model Employee {
-  id                 String @id @default(cuid())
-  companyId          String
-  company            Company @relation(fields: [companyId], references: [id])
-  employeeId         String
-  firstName          String
-  lastName           String
-  email              String @unique
-  phone              String?
-  dateOfJoining      DateTime
-  departmentId       String?
-  department         Department? @relation(fields: [departmentId], references: [id])
-  designation        String?
-  salaryType         SalaryType @default(STANDARD)
-  careerStage        CareerStage @default(PROBATION)
-  status             EmployeeStatus @default(ACTIVE)
-  reportingManagerId String?
-  personalEmail      String?
-  phonePersonal      String?
-  address            String?
-  city               String?
-  state              String?
-  country            String?
-  aadharNumber       String?
-  panNumber          String?
-  bankAccountNumber  String?
-  ifscCode           String?
-  bankName           String?
-  nomineeName        String?
-  nomineeRelationship String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  archivedAt         DateTime?
+model Task {
+  id            String   @id @default(cuid())
+  mongoEmployeeId String // Assigned to (from MongoDB)
+  mongoCreatedBy String  // Created by (from MongoDB)
+  mongoCompanyId String   // Company context (from MongoDB)
   
-  user               User?
-  employeeSalaries   EmployeeSalary[]
-  payrollRecords     PayrollRecord[]
-  salesPerformance   SalesPerformance[]
-  offerLetters       OfferLetter[]
+  title         String
+  description   String?
+  priority      TaskPriority @default(MEDIUM)
+  status        TaskStatus @default(PENDING)
+  dueDate       DateTime?
+  completedAt   DateTime?
   
-  @@unique([companyId, employeeId])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Sync metadata
+  lastSyncedAt  DateTime?
+  syncAttempts  Int      @default(0)
+  isSynced      Boolean  @default(false)
+  
+  @@index([mongoEmployeeId])
+  @@index([mongoCreatedBy])
+  @@index([status])
+  @@index([dueDate])
 }
 
-enum SalaryType {
-  STANDARD
-  SALES
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
-enum CareerStage {
-  PROBATION
-  ESTABLISHED
-}
-
-enum EmployeeStatus {
-  ACTIVE
-  INACTIVE
-  ARCHIVED
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ON_HOLD
 }
 
 // ============================================
-// SALARY STRUCTURES & COMPONENTS
+// ERM SYSTEM - Leave Management
 // ============================================
-
-model SalaryStructure {
-  id                    String @id @default(cuid())
-  companyId             String
-  company               Company @relation(fields: [companyId], references: [id])
-  name                  String
-  type                  SalaryType
-  careerStage           CareerStage?
-  hraPercentage         Decimal? @db.Decimal(5, 2) @default(30.00)
-  daPercentage          Decimal? @db.Decimal(5, 2) @default(8.00)
-  pfPercentage          Decimal? @db.Decimal(5, 2) @default(12.00)
-  esiPercentage         Decimal? @db.Decimal(5, 2) @default(0.75)
-  baseSalaryProbation   Decimal? @db.Decimal(12, 2) @default(5000.00)
-  baseSalaryEstablished Decimal? @db.Decimal(12, 2) @default(13000.00)
-  skillAllowance        Decimal? @db.Decimal(10, 2) @default(1500.00)
-  medicalAllowance      Decimal? @db.Decimal(10, 2) @default(1250.00)
-  wellnessAllowance     Decimal? @db.Decimal(10, 2) @default(2500.00)
-  welfareFundDeduction  Decimal? @db.Decimal(10, 2) @default(150.00)
-  communicationDeduction Decimal? @db.Decimal(10, 2) @default(400.00)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  isActive              Boolean @default(true)
+model Leave {
+  id            String   @id @default(cuid())
+  mongoEmployeeId String
+  mongoCompanyId String
+  mongoApprovedBy String?
   
-  commissionTiers       CommissionTier[]
-  referralBonuses       ReferralBonus[]
-  employeeSalaries      EmployeeSalary[]
+  leaveType     LeaveType
+  startDate     DateTime
+  endDate       DateTime
+  days          Int      // Number of days requested
+  status        LeaveStatus @default(PENDING)
+  reason        String?
+  approvalNotes String?
   
-  @@unique([companyId, name])
+  approvedAt    DateTime?
+  rejectedAt    DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Sync metadata
+  lastSyncedAt  DateTime?
+  syncAttempts  Int      @default(0)
+  isSynced      Boolean  @default(false)
+  
+  @@index([mongoEmployeeId])
+  @@index([status])
+  @@index([startDate])
 }
 
-model CommissionTier {
-  id                   String @id @default(cuid())
-  salaryStructureId    String
-  salaryStructure      SalaryStructure @relation(fields: [salaryStructureId], references: [id])
-  tierNumber           Int
-  salesRangeStart      Int
-  salesRangeEnd        Int
-  ratePerSale          Decimal @db.Decimal(10, 2)
-  description          String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  
-  @@unique([salaryStructureId, tierNumber])
+enum LeaveType {
+  ANNUAL
+  SICK
+  CASUAL
+  MATERNITY
+  PATERNITY
+  UNPAID
+  OTHER
 }
 
-model ReferralBonus {
-  id                   String @id @default(cuid())
-  salaryStructureId    String
-  salaryStructure      SalaryStructure @relation(fields: [salaryStructureId], references: [id])
-  referralNumber       Int
-  bonusAmount          Decimal @db.Decimal(10, 2)
-  createdAt            DateTime @default(now())
-  
-  @@unique([salaryStructureId, referralNumber])
-}
-
-model EmployeeSalary {
-  id                   String @id @default(cuid())
-  employeeId           String
-  employee             Employee @relation(fields: [employeeId], references: [id])
-  salaryStructureId    String
-  salaryStructure      SalaryStructure @relation(fields: [salaryStructureId], references: [id])
-  effectiveFrom        DateTime
-  effectiveTill        DateTime?
-  basicSalary          Decimal? @db.Decimal(12, 2)
-  specialAllowance     Decimal @db.Decimal(10, 2) @default(0)
-  otherAllowance       Decimal @db.Decimal(10, 2) @default(0)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  isActive             Boolean @default(true)
-  
-  @@unique([employeeId, effectiveFrom])
-}
-
-// ============================================
-// PAYROLL MANAGEMENT
-// ============================================
-
-model PayrollRecord {
-  id                   String @id @default(cuid())
-  companyId            String
-  company              Company @relation(fields: [companyId], references: [id])
-  employeeId           String
-  employee             Employee @relation(fields: [employeeId], references: [id])
-  month                DateTime
-  basicSalary          Decimal @db.Decimal(12, 2) @default(0)
-  hra                  Decimal @db.Decimal(12, 2) @default(0)
-  da                   Decimal @db.Decimal(12, 2) @default(0)
-  specialAllowance     Decimal @db.Decimal(12, 2) @default(0)
-  otherAllowance       Decimal @db.Decimal(12, 2) @default(0)
-  commission           Decimal @db.Decimal(12, 2) @default(0)
-  bonus                Decimal @db.Decimal(12, 2) @default(0)
-  referralBonus        Decimal @db.Decimal(12, 2) @default(0)
-  grossEarnings        Decimal @db.Decimal(12, 2) @default(0)
-  incomeTax            Decimal @db.Decimal(12, 2) @default(0)
-  providentFund        Decimal @db.Decimal(12, 2) @default(0)
-  professionalTax      Decimal @db.Decimal(12, 2) @default(0)
-  otherDeductions      Decimal @db.Decimal(12, 2) @default(0)
-  totalDeductions      Decimal @db.Decimal(12, 2) @default(0)
-  netSalary            Decimal @db.Decimal(12, 2) @default(0)
-  annualCTC            Decimal @db.Decimal(12, 2) @default(0)
-  status               PayrollStatus @default(DRAFT)
-  calculatedAt         DateTime?
-  approvedAt           DateTime?
-  approvedBy           String?
-  processedAt          DateTime?
-  paidAt               DateTime?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  
-  @@unique([employeeId, month])
-}
-
-enum PayrollStatus {
-  DRAFT
-  CALCULATED
+enum LeaveStatus {
+  PENDING
   APPROVED
-  PROCESSED
-  PAID
-}
-
-model SalesPerformance {
-  id                   String @id @default(cuid())
-  employeeId           String
-  employee             Employee @relation(fields: [employeeId], references: [id])
-  month                DateTime
-  salesCount           Int @default(0)
-  referralCount        Int @default(0)
-  milestone3rdAchieved Boolean @default(false)
-  milestone4thAchieved Boolean @default(false)
-  milestone8thAchieved Boolean @default(false)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  
-  @@unique([employeeId, month])
-}
-
-// ============================================
-// OFFER LETTERS
-// ============================================
-
-model OfferLetter {
-  id                   String @id @default(cuid())
-  companyId            String
-  company              Company @relation(fields: [companyId], references: [id])
-  employeeId           String
-  employee             Employee @relation(fields: [employeeId], references: [id])
-  offerDate            DateTime
-  validTill            DateTime
-  designation          String?
-  departmentId         String?
-  reportingManagerId   String?
-  location             String?
-  probationPeriod      String @default("3 months")
-  grossMonthly         Decimal? @db.Decimal(12, 2)
-  netMonthly           Decimal? @db.Decimal(12, 2)
-  annualCTC            Decimal? @db.Decimal(12, 2)
-  status               OfferLetterStatus @default(DRAFT)
-  generatedAt          DateTime?
-  sentAt               DateTime?
-  sentBy               String?
-  acceptanceDate       DateTime?
-  pdfUrl               String?
-  docxUrl              String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-}
-
-enum OfferLetterStatus {
-  DRAFT
-  GENERATED
-  SENT
-  ACCEPTED
   REJECTED
-  EXPIRED
+  CANCELLED
 }
 
 // ============================================
-// TAX CONFIGURATION
+// SYNC SYSTEM - MongoDB ↔ PostgreSQL Sync
 // ============================================
-
-model PTSlab {
-  id                   String @id @default(cuid())
-  companyId            String
-  company              Company @relation(fields: [companyId], references: [id])
-  state                String
-  salaryRangeMin       Decimal @db.Decimal(10, 2)
-  salaryRangeMax       Decimal @db.Decimal(10, 2)
-  ptAmount             Decimal @db.Decimal(10, 2)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+model SyncLog {
+  id            String   @id @default(cuid())
   
-  @@unique([companyId, state, salaryRangeMin])
+  // Sync metadata
+  entityType    String   // attendance, task, leave
+  entityId      String   // Prisma ID
+  mongoId       String?  // MongoDB ID (if applicable)
+  mongoUserId   String   // Which MongoDB user triggered this
+  mongoCompanyId String  // Which company context
+  
+  // Sync details
+  direction     SyncDirection // MONGO_TO_PG, PG_TO_MONGO, BIDIRECTIONAL
+  action        SyncAction    // CREATE, UPDATE, DELETE
+  status        SyncStatus
+  
+  // Payload tracking
+  dataSnapshot  Json?    // What was synced
+  errorMessage  String?
+  
+  createdAt     DateTime @default(now())
+  completedAt   DateTime?
+  
+  // Retry logic
+  retryCount    Int      @default(0)
+  nextRetryAt   DateTime?
+  
+  @@index([entityType])
+  @@index([mongoCompanyId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum SyncDirection {
+  MONGO_TO_PG
+  PG_TO_MONGO
+  BIDIRECTIONAL
+}
+
+enum SyncAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  SUCCESS
+  FAILED
+  RETRY_PENDING
 }
 
 // ============================================
-// AUDIT LOGGING
+// AUDIT - Sync Event Tracking
 // ============================================
-
-model AuditLog {
-  id                   String @id @default(cuid())
-  companyId            String
-  company              Company @relation(fields: [companyId], references: [id])
-  userId               String?
-  user                 User? @relation(fields: [userId], references: [id])
-  entityType           String
-  entityId             String?
-  action               String
-  oldValues            Json?
-  newValues            Json?
-  ipAddress            String?
-  userAgent            String?
-  createdAt            DateTime @default(now())
+model SyncEvent {
+  id            String   @id @default(cuid())
+  
+  syncLogId     String   // Reference to SyncLog
+  mongoUserId   String   // Who initiated
+  mongoCompanyId String
+  
+  eventType     String   // webhook_received, sync_triggered, etc
+  payload       Json?
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([syncLogId])
+  @@index([mongoCompanyId])
+  @@index([createdAt])
 }
