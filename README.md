@@ -742,3 +742,161 @@ Phase 1 involved a complete architecture redesign to eliminate dual-database con
 | PHASE 4: Production | Pending | 0% | 2-3 hours |
 
 **Total Effort**: 7-13 hours | **Status**: On Track
+
+
+---
+
+## PHASE 2: Authentication System (COMPLETED)
+
+### Overview
+PHASE 2 implements a complete authentication system using MongoDB exclusively. All Prisma User references have been eliminated, and the system now uses Mongoose models for user management and JWT tokens for authentication.
+
+### Key Changes in PHASE 2
+
+#### 1. AuthController Refactoring
+**File**: `src/controllers/authController.js` (359 lines)
+
+**Changes**:
+- Removed all Prisma imports and references (prisma.user, prisma.userCompany)
+- Now imports MongoDB models: User and Company (Mongoose)
+- Uses User.findOne() instead of prisma.user.findUnique()
+- Uses user.comparePassword() method (bcrypt) instead of user.passwordHash
+- Password field is stored as password (not passwordHash) and pre-hashed via Mongoose hook
+
+**Authentication Endpoints**:
+- POST /api/v1/auth/login: { email, password, companyId? } -> { user, company, tokens }
+- POST /api/v1/auth/refresh: { refreshToken } -> { accessToken, expiresIn }
+- POST /api/v1/auth/switch-company: { companyId } -> { company, tokens }
+- POST /api/v1/auth/logout: {} -> { success: true }
+
+#### 2. MongoDB User Model
+**File**: `src/models/User.js` (58 lines)
+
+Schema fields:
+- email: String (unique, lowercase, required)
+- password: String (hashed via pre-save hook, minlength: 6)
+- firstName: String (required)
+- lastName: String (required)
+- role: Enum [USER, HR_MANAGER, PAYROLL_ADMIN, SUPER_ADMIN] (default: USER)
+- permissions: Array of permission strings
+- companyId: ObjectId reference to Company
+- isActive: Boolean (default: true)
+- lastLogin: Date (tracked on successful login)
+- createdAt: Date (auto-set)
+- updatedAt: Date (auto-set)
+
+Methods: comparePassword(password) - async bcrypt comparison
+
+#### 3. Database Architecture
+**MongoDB Collections**:
+- users: All user accounts with hashed passwords
+- companies: Organization data
+- employees: Employee records
+
+**Key Principle**: Users stored ONLY in MongoDB. NO User model in Prisma (removed in PHASE 1).
+
+#### 4. Seed Data Script
+**File**: `src/scripts/seedDatabase.js` (197 lines)
+
+Creates:
+- 2 test companies (Portfolio Builders Inc, Portfolix Media Solutions)
+- 5 test users with roles: SUPER_ADMIN, HR_MANAGER, PAYROLL_ADMIN, USER
+- 2 test employees
+- All passwords pre-hashed
+
+Usage: npm run seed
+
+Test credentials:
+- admin@portfoliobuilders.com / Admin@123456 (SUPER_ADMIN)
+- hr@portfoliobuilders.com / HR@123456 (HR_MANAGER)
+- payroll@portfoliobuilders.com / Payroll@123456 (PAYROLL_ADMIN)
+- employee@portfoliobuilders.com / Employee@123456 (USER)
+- admin@portfolixmedia.com / AdminMedia@123456 (SUPER_ADMIN, Company 2)
+
+### Authentication Flow
+
+1. Client POST /api/v1/auth/login { email, password }
+2. Backend: User.findOne({ email })
+3. Backend: user.comparePassword(password) [bcrypt]
+4. Backend: Check user.isActive and user.companyId
+5. Backend: Update user.lastLogin, save user
+6. Backend: Generate JWT tokens (access 1h + refresh 7d)
+7. Backend: Return { user, company, tokens }
+8. Client: Store tokens (accessToken in memory, refreshToken in secure storage)
+
+### JWT Token Structure
+
+Access Token:
+- id: user_mongodb_id
+- companyId: company_id
+- role: SUPER_ADMIN (or other role)
+- iat, exp: JWT timestamps
+
+Refresh Token:
+- id, companyId, type: 'refresh'
+- iat, exp: JWT timestamps (7 day expiry)
+
+### Password Security
+
+- Algorithm: bcryptjs
+- Salt rounds: 10 (Mongoose pre-save hook)
+- Flow: Plain password -> bcrypt.hash() -> MongoDB
+- Comparison: User input -> bcrypt.compare() vs stored hash
+
+### PHASE 2 Completion Checklist
+
+✅ AuthController updated to MongoDB-only
+✅ Removed all Prisma User references from auth
+✅ Password field handling corrected (password vs passwordHash)
+✅ User.comparePassword() method working
+✅ Seed script created with test data
+✅ JWT token generation implemented
+✅ Company context tracking in tokens
+✅ Last login timestamp tracking
+✅ User active status checking
+✅ Documentation completed
+
+### Testing PHASE 2
+
+Prerequisites:
+```bash
+npm install          # Install dependencies
+prisma generate     # Generate client
+prisma migrate dev  # Apply migrations
+npm run seed        # Create test data
+```
+
+Manual testing:
+```bash
+npm run dev
+
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@portfoliobuilders.com","password":"Admin@123456"}'
+```
+
+### Known Limitations (PHASE 2)
+
+1. Single Company Per User: Each user assigned to ONE company. PHASE 3 will implement multi-company via UserCompany model.
+
+2. Token Revocation: JWT tokens valid until expiry. PHASE 4 will add token blacklist system.
+
+3. No Role-Based Middleware: PHASE 3 will add permission checking middleware.
+
+4. No Email Verification: PHASE 4 will add email verification.
+
+### Files Modified/Created
+
+- src/controllers/authController.js - Updated to MongoDB-only (359 lines)
+- src/scripts/seedDatabase.js - New seed script (197 lines)
+- README.md - This PHASE 2 documentation
+
+### Production Readiness
+
+Status: 65% -> 75% (with PHASE 2)
+
+Remaining:
+- PHASE 3 (ERM modules, advanced sync): -> 90%
+- PHASE 4 (Production hardening): -> 100%
+
+---
