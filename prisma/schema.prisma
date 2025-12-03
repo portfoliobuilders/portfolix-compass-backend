@@ -23,7 +23,7 @@ model User {
   passwordHash String
   fullName  String?
   role      UserRole @default(VIEWER)
-  employeeId String?
+  employeeId String? @unique
   employee  Employee? @relation(fields: [employeeId], references: [id])
   lastLogin DateTime?
   loginAttempts Int @default(0)
