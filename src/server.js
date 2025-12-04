@@ -33,6 +33,7 @@ app.use('/api/tax-config', require('./routes/taxConfig.routes'));
 app.use('/api/compensation', require('./routes/compensation.routes'));
 app.use('/api/reports', require('./routes/reports.routes'));
 app.use('/api/companies', require('./routes/company.routes'));
+app.use('/api/erm', require('./routes/ermRoutes.js'));
 
 // Health Check Endpoint
 app.get('/health', (req, res) => {
