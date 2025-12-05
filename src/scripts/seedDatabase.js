@@ -1,19 +1,19 @@
 /**
  * Seed Database Script - PHASE 2
- * Creates test data for authentication testing
+ * Creates test data for Portfolix Enterprise
  * Usage: npm run seed
- * 
+ *
  * Creates:
- * - Test companies
+ * - Parent Organization: Portfolix enterprise Private limited
+ * - Sub-Organizations: Portfolio Builders & Portfolix.Tech
  * - Test users with hashed passwords
  * - Test employees
  * - Test permissions
  */
-
 require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const Company = require('../models/Company');
+const Organization = require('../models/Organization');
 const User = require('../models/User');
 const Employee = require('../models/Employee');
 
@@ -28,164 +28,166 @@ const seedData = async () => {
     // Clear existing data (ONLY for development)
     if (process.env.NODE_ENV === 'development') {
       console.log('Clearing existing data...');
-      await Company.deleteMany({});
+      await Organization.deleteMany({});
       await User.deleteMany({});
       await Employee.deleteMany({});
     }
 
-    // Create test companies
-    console.log('Creating test companies...');
-    const company1 = await Company.create({
-      name: 'Portfolio Builders Inc',
-      shortName: 'PBI',
-      industry: 'Technology',
-      registrationNumber: 'REG001',
-      address: '123 Tech Street, San Francisco, CA',
-      phone: '+1-555-0001',
-      email: 'info@portfoliobuilders.com',
-      fiscalYearStart: '01-04',
-      country: 'USA',
-      state: 'California',
-      pincode: '94101'
+    // Create Parent Organization: Portfolix enterprise Private limited
+    console.log('Creating parent organization...');
+    const parentOrg = await Organization.create({
+      name: 'Portfolix enterprise Private limited',
+      orgCode: 'PORTX001',
+      email: 'info@portfolixenterprise.com',
+      phone: '+91-9876543210',
+      industry: 'Consulting',
+      foundedYear: 2020,
+      employeeCount: 150,
+      address: {
+        street: 'Plot 123, Tech Park Building A',
+        city: 'Bangalore',
+        state: 'Karnataka',
+        country: 'India',
+        zipCode: '560001',
+      },
+      registrationNumber: 'CIN123456789',
+      panNumber: 'AAAPA0001K',
+      gstNumber: '18AABCP1234A1Z5',
+      tandNumber: 'TAN001234',
+      pfRegistration: 'KA/PF/12345',
+      taxConfigurations: {
+        incomeTaxSlabYear: 2024,
+        professionalTaxState: 'Karnataka',
+        pfContributionRate: 12,
+        esicContributionRate: 3.25,
+      },
+      subscriptionPlan: 'Enterprise',
+      subscriptionStatus: 'Active',
+      subscriptionStartDate: new Date('2024-01-01'),
+      subscriptionEndDate: new Date('2025-12-31'),
+      status: 'Active',
+      isVerified: true,
+      settings: {
+        allowSalaryAdvance: true,
+        allowLeaveEncashment: true,
+        defaultPaymentCycle: 'Monthly',
+        bankAccountForSalary: {
+          bankName: 'HDFC Bank',
+          accountNumber: '1234567890123',
+          ifscCode: 'HDFC0000123',
+          accountHolderName: 'Portfolix enterprise Private limited',
+        },
+      },
     });
+    console.log('Parent Organization created:', parentOrg._id);
 
-    const company2 = await Company.create({
-      name: 'Portfolix Media Solutions',
-      shortName: 'PMS',
-      industry: 'Media & Entertainment',
-      registrationNumber: 'REG002',
-      address: '456 Media Avenue, New York, NY',
-      phone: '+1-555-0002',
-      email: 'info@portfolixmedia.com',
-      fiscalYearStart: '01-04',
-      country: 'USA',
-      state: 'New York',
-      pincode: '10001'
+    // Create Sub-Organization 1: Portfolio Builders (edtech)
+    console.log('Creating Portfolio Builders (edtech)...');
+    const portBuilder = await Organization.create({
+      name: 'Portfolio Builders',
+      orgCode: 'PORTX002',
+      email: 'info@portfoliobuilders.in',
+      phone: '+91-8765432109',
+      industry: 'Education',
+      foundedYear: 2021,
+      employeeCount: 75,
+      address: {
+        street: 'Suite 201, Innovation Hub',
+        city: 'Bangalore',
+        state: 'Karnataka',
+        country: 'India',
+        zipCode: '560002',
+      },
+      registrationNumber: 'CIN987654321',
+      panNumber: 'AAAPB0002K',
+      gstNumber: '18AABCB1234B1Z5',
+      tandNumber: 'TAN001235',
+      pfRegistration: 'KA/PF/12346',
+      taxConfigurations: {
+        incomeTaxSlabYear: 2024,
+        professionalTaxState: 'Karnataka',
+        pfContributionRate: 12,
+        esicContributionRate: 3.25,
+      },
+      subscriptionPlan: 'Professional',
+      subscriptionStatus: 'Active',
+      subscriptionStartDate: new Date('2024-01-01'),
+      subscriptionEndDate: new Date('2025-12-31'),
+      status: 'Active',
+      isVerified: true,
+      settings: {
+        allowSalaryAdvance: true,
+        allowLeaveEncashment: true,
+        defaultPaymentCycle: 'Monthly',
+        bankAccountForSalary: {
+          bankName: 'ICICI Bank',
+          accountNumber: '1122334455667',
+          ifscCode: 'ICIC0000456',
+          accountHolderName: 'Portfolio Builders',
+        },
+      },
     });
+    console.log('Portfolio Builders created:', portBuilder._id);
 
-    console.log('Companies created:', company1._id, company2._id);
-
-    // Create test users
-    console.log('Creating test users...');
-    const user1 = await User.create({
-      email: 'admin@portfoliobuilders.com',
-      password: 'Admin@123456', // Will be hashed by pre-save hook
-      firstName: 'Admin',
-      lastName: 'User',
-      role: 'SUPER_ADMIN',
-      permissions: ['CREATE_EMPLOYEE', 'VIEW_PAYROLL', 'APPROVE_LEAVE', 'VIEW_REPORTS'],
-      companyId: company1._id,
-      isActive: true
+    // Create Sub-Organization 2: Portfolix.Tech (Software Development)
+    console.log('Creating Portfolix.Tech (Software Development)...');
+    const portTech = await Organization.create({
+      name: 'Portfolix.Tech',
+      orgCode: 'PORTX003',
+      email: 'info@portfolix.tech',
+      phone: '+91-7654321098',
+      industry: 'IT',
+      foundedYear: 2022,
+      employeeCount: 60,
+      address: {
+        street: 'Floor 5, Silicon Valley Plaza',
+        city: 'Bangalore',
+        state: 'Karnataka',
+        country: 'India',
+        zipCode: '560003',
+      },
+      registrationNumber: 'CIN456123789',
+      panNumber: 'AAAPV0003K',
+      gstNumber: '18AABCV1234V1Z5',
+      tandNumber: 'TAN001236',
+      pfRegistration: 'KA/PF/12347',
+      taxConfigurations: {
+        incomeTaxSlabYear: 2024,
+        professionalTaxState: 'Karnataka',
+        pfContributionRate: 12,
+        esicContributionRate: 3.25,
+      },
+      subscriptionPlan: 'Professional',
+      subscriptionStatus: 'Active',
+      subscriptionStartDate: new Date('2024-01-01'),
+      subscriptionEndDate: new Date('2025-12-31'),
+      status: 'Active',
+      isVerified: true,
+      settings: {
+        allowSalaryAdvance: true,
+        allowLeaveEncashment: true,
+        defaultPaymentCycle: 'Monthly',
+        bankAccountForSalary: {
+          bankName: 'Axis Bank',
+          accountNumber: '9876543210123',
+          ifscCode: 'AXIS0000789',
+          accountHolderName: 'Portfolix.Tech',
+        },
+      },
     });
+    console.log('Portfolix.Tech created:', portTech._id);
 
-    const user2 = await User.create({
-      email: 'hr@portfoliobuilders.com',
-      password: 'HR@123456', // Will be hashed by pre-save hook
-      firstName: 'HR',
-      lastName: 'Manager',
-      role: 'HR_MANAGER',
-      permissions: ['CREATE_EMPLOYEE', 'APPROVE_LEAVE', 'VIEW_EMPLOYEES'],
-      companyId: company1._id,
-      isActive: true
-    });
-
-    const user3 = await User.create({
-      email: 'payroll@portfoliobuilders.com',
-      password: 'Payroll@123456', // Will be hashed by pre-save hook
-      firstName: 'Payroll',
-      lastName: 'Admin',
-      role: 'PAYROLL_ADMIN',
-      permissions: ['VIEW_PAYROLL', 'GENERATE_SALARY_SLIP', 'VIEW_REPORTS'],
-      companyId: company1._id,
-      isActive: true
-    });
-
-    const user4 = await User.create({
-      email: 'employee@portfoliobuilders.com',
-      password: 'Employee@123456', // Will be hashed by pre-save hook
-      firstName: 'John',
-      lastName: 'Employee',
-      role: 'USER',
-      permissions: ['VIEW_PROFILE', 'APPLY_LEAVE'],
-      companyId: company1._id,
-      isActive: true
-    });
-
-    // Create test user for second company
-    const user5 = await User.create({
-      email: 'admin@portfolixmedia.com',
-      password: 'AdminMedia@123456', // Will be hashed by pre-save hook
-      firstName: 'Admin',
-      lastName: 'Media',
-      role: 'SUPER_ADMIN',
-      permissions: ['CREATE_EMPLOYEE', 'VIEW_PAYROLL', 'APPROVE_LEAVE'],
-      companyId: company2._id,
-      isActive: true
-    });
-
-    console.log('Users created:');
-    console.log('- Admin:', user1.email);
-    console.log('- HR Manager:', user2.email);
-    console.log('- Payroll Admin:', user3.email);
-    console.log('- Employee:', user4.email);
-    console.log('- Media Admin:', user5.email);
-
-    // Create test employees
-    console.log('Creating test employees...');
-    const employee1 = await Employee.create({
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@portfoliobuilders.com',
-      phone: '555-0101',
-      dateOfBirth: new Date('1990-01-15'),
-      gender: 'Male',
-      address: '100 Main St',
-      city: 'San Francisco',
-      state: 'CA',
-      pincode: '94101',
-      companyId: company1._id,
-      department: 'Engineering',
-      designation: 'Senior Developer',
-      reportingTo: 'manager@company.com',
-      dateOfJoining: new Date('2021-06-01'),
-      employmentType: 'Full Time',
-      status: 'Active'
-    });
-
-    const employee2 = await Employee.create({
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith@portfoliobuilders.com',
-      phone: '555-0102',
-      dateOfBirth: new Date('1992-03-22'),
-      gender: 'Female',
-      address: '200 Park Ave',
-      city: 'San Francisco',
-      state: 'CA',
-      pincode: '94101',
-      companyId: company1._id,
-      department: 'Human Resources',
-      designation: 'HR Manager',
-      reportingTo: 'admin@company.com',
-      dateOfJoining: new Date('2020-11-15'),
-      employmentType: 'Full Time',
-      status: 'Active'
-    });
-
-    console.log('Employees created:');
-    console.log('- Employee 1:', employee1.email);
-    console.log('- Employee 2:', employee2.email);
-
-    console.log('\n=== SEED DATA CREATED SUCCESSFULLY ===\n');
-    console.log('Test credentials:');
-    console.log('Company 1: Portfolio Builders Inc');
-    console.log('  - Admin: admin@portfoliobuilders.com / Admin@123456');
-    console.log('  - HR Manager: hr@portfoliobuilders.com / HR@123456');
-    console.log('  - Payroll: payroll@portfoliobuilders.com / Payroll@123456');
-    console.log('  - Employee: employee@portfoliobuilders.com / Employee@123456');
-    console.log('\nCompany 2: Portfolix Media Solutions');
-    console.log('  - Admin: admin@portfolixmedia.com / AdminMedia@123456');
-    console.log('\n=== Ready for testing authentication endpoints ===\n');
+    console.log('\n=== ORGANIZATIONS CREATED SUCCESSFULLY ===\n');
+    console.log('Parent Organization:', parentOrg.name);
+    console.log(' - Code:', parentOrg.orgCode);
+    console.log(' - Email:', parentOrg.email);
+    console.log('\nSub-Organization 1: Portfolio Builders');
+    console.log(' - Code:', portBuilder.orgCode);
+    console.log(' - Email:', portBuilder.email);
+    console.log('\nSub-Organization 2: Portfolix.Tech');
+    console.log(' - Code:', portTech.orgCode);
+    console.log(' - Email:', portTech.email);
+    console.log('\n=== ALL ORGANIZATION DATA SEEDED ===\n');
 
     process.exit(0);
   } catch (error) {
