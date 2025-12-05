@@ -71,8 +71,8 @@ const seedData = async () => {
         defaultPaymentCycle: 'Monthly',
         bankAccountForSalary: {
           bankName: 'Federal Bank',
-          accountNumber: '1234567890123456',
-          ifscCode: 'FDRL0001234',
+          accountNumber: '16080200009102',
+          ifscCode: 'FDRL0001608',
           accountHolderName: 'Portfolix enterprise Private limited',
         },
       },
@@ -128,8 +128,8 @@ const seedData = async () => {
         defaultPaymentCycle: 'Monthly',
         bankAccountForSalary: {
           bankName: 'Federal Bank',
-          accountNumber: '1234567890123456',
-          ifscCode: 'FDRL0001234',
+          accountNumber: '16080200009102',
+          ifscCode: 'FDRL0001608',
           accountHolderName: 'Portfolix enterprise Private limited',
         },
       },
