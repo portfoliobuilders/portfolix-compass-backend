@@ -40,7 +40,7 @@ const seedData = async () => {
       phone: '+91-7994721792',
       industry: 'Consulting',
       foundedYear: 2024,
-      employeeCount: 135,
+      employeeCount: 9,
       address: {
         street: 'Ground Floor, KUBZ, 2115, Padamugal - Palachuvadu Rd, Satellite Twp',
         city: 'Kakkanad',
