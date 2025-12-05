@@ -6,7 +6,7 @@
  * Database: MongoDB with Mongoose ODM
  */
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { HTTP_STATUS, ERROR_CODES, JWT_CONFIG } = require('../config/constants');
 const User = require('../models/User');
 const Company = require('../models/Company');
