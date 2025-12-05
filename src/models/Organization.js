@@ -192,8 +192,7 @@ const organizationSchema = new mongoose.Schema(
         enum: ['Monthly', 'Bi-weekly', 'Weekly'],
         default: 'Monthly',
       },
-      bankAccountFoSalaryy: {
-        bankName: String,
+    bankAccountForSalary: {        bankName: String,
         accountNumber: String,
         ifscCode: String,
         accountHolderName: String,
