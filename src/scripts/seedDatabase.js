@@ -1,4 +1,4 @@
-/**
+employeeCount: 75/**
  * Seed Database Script - PHASE 2
  * Creates test data for Portfolix Enterprise
  * Usage: npm run seed
@@ -97,7 +97,7 @@ const seedData = async () => {
       phone: '+91-7994721792',
       industry: 'Education',
       foundedYear: 2021,
-      employeeCount: 75,
+      employeeCount: 9,
       address: {
         street: 'Ground Floor, KUBZ, 2115, Padamugal - Palachuvadu Rd, Satellite Twp',
         city: 'Kakkanad',
