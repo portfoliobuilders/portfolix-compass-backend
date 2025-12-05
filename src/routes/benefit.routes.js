@@ -1,0 +1,9 @@
+const express = require('express');
+const { authenticate } = require('../middlewares/auth.middleware');
+const router = express.Router();
+router.get('/', authenticate, (req, res) => res.status(200).json({ message: 'Get all benefits' }));
+router.get('/:id', authenticate, (req, res) => res.status(200).json({ message: 'Get benefit', id: req.params.id }));
+router.post('/', authenticate, (req, res) => res.status(201).json({ message: 'Benefit created', data: req.body }));
+router.put('/:id', authenticate, (req, res) => res.status(200).json({ message: 'Benefit updated', id: req.params.id }));
+router.delete('/:id', authenticate, (req, res) => res.status(200).json({ message: 'Benefit deleted', id: req.params.id }));
+module.exports = router;
