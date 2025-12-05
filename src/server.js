@@ -34,6 +34,12 @@ app.use('/api/compensation', require('./routes/compensation.routes'));
 app.use('/api/reports', require('./routes/reports.routes'));
 app.use('/api/companies', require('./routes/company.routes'));
 app.use('/api/erm', require('./routes/ermRoutes.js'));
+app.use('/api/attendance', require('./routes/attendance.routes'));
+app.use('/api/leave', require('./routes/leave.routes'));
+app.use('/api/benefit', require('./routes/benefit.routes'));
+app.use('/api/department', require('./routes/department.routes'));
+app.use('/api/position', require('./routes/position.routes'));
+app.use('/api/job-grade', require('./routes/jobGrade.routes'));
 
 // Health Check Endpoint
 app.get('/health', (req, res) => {

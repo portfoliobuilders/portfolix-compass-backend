@@ -1,0 +1,9 @@
+const express = require('express');
+const { authenticate } = require('../middlewares/auth.middleware');
+const router = express.Router();
+router.get('/', authenticate, (req, res) => res.status(200).json({ message: 'Get all job grades' }));
+router.get('/:id', authenticate, (req, res) => res.status(200).json({ message: 'Get job grade', id: req.params.id }));
+router.post('/', authenticate, (req, res) => res.status(201).json({ message: 'Job grade created', data: req.body }));
+router.put('/:id', authenticate, (req, res) => res.status(200).json({ message: 'Job grade updated', id: req.params.id }));
+router.delete('/:id', authenticate, (req, res) => res.status(200).json({ message: 'Job grade deleted', id: req.params.id }));
+module.exports = router;
