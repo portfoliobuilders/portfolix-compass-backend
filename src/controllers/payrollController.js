@@ -61,7 +61,7 @@ const calculatePayroll = async (req, res, next) => {
     // Calculate payroll for each employee
     const payrolls = [];
     for (const employee of employees) {
-      const salaryCalculation = SalaryCalculationService.calculateSalary(employee, month Date.getMonth() + 1);
+      const salaryCalculation = SalaryCalculationService.calculateSalary(employee, month , Date.getMonth() + 1);
       
       const payroll = await prisma.payroll.create({
         data: {
