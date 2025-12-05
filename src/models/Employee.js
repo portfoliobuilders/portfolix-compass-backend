@@ -13,7 +13,6 @@ const employeeSchema = new mongoose.Schema(
       required: [true, 'Organization ID is required'],
       index: true,
     },
-
     // Personal Information
     firstName: {
       type: String,
@@ -39,7 +38,6 @@ const employeeSchema = new mongoose.Schema(
       match: [/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, 'Invalid phone number'],
     },
     dateOfBirth: Date,
-
     // Employment Details
     employeeId: {
       type: String,
@@ -66,7 +64,6 @@ const employeeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Employee',
     },
-
     // Salary Structure
     salaryStructure: {
       baseSalary: {
@@ -75,20 +72,47 @@ const employeeSchema = new mongoose.Schema(
         min: [0, 'Base salary cannot be negative'],
       },
       allowances: {
-        hra: { type: Number, default: 0 },
-        da: { type: Number, default: 0 },
-        special: { type: Number, default: 0 },
-        other: [{ name: String, amount: Number }],
+        hra: {
+          type: Number,
+          default: 0,
+        },
+        da: {
+          type: Number,
+          default: 0,
+        },
+        special: {
+          type: Number,
+          default: 0,
+        },
+        other: [
+          {
+            name: String,
+            amount: Number,
+          },
+        ],
       },
       deductions: {
-        pf: { type: Number, default: 0 },
-        esi: { type: Number, default: 0 },
-        professionalTax: { type: Number, default: 0 },
-        other: [{ name: String, amount: Number }],
+        pf: {
+          type: Number,
+          default: 0,
+        },
+        esi: {
+          type: Number,
+          default: 0,
+        },
+        professionalTax: {
+          type: Number,
+          default: 0,
+        },
+        other: [
+          {
+            name: String,
+            amount: Number,
+          },
+        ],
       },
-      ctc: Number, // Calculated automatically
+      ctc: Number,
     },
-
     // Bank Details
     bankDetails: {
       bankName: String,
@@ -97,7 +121,6 @@ const employeeSchema = new mongoose.Schema(
       ifscCode: String,
       branchName: String,
     },
-
     // Tax Information
     taxDetails: {
       panNumber: String,
@@ -105,7 +128,6 @@ const employeeSchema = new mongoose.Schema(
       pfAccountNumber: String,
       esiNumber: String,
     },
-
     // Contact Information
     address: {
       presentAddress: {
@@ -123,15 +145,25 @@ const employeeSchema = new mongoose.Schema(
         zipCode: String,
       },
     },
-
     // Leave & Attendance
     leaveBalance: {
-      annual: { type: Number, default: 0 },
-      sick: { type: Number, default: 0 },
-      casual: { type: Number, default: 0 },
-      compensatory: { type: Number, default: 0 },
+      annual: {
+        type: Number,
+        default: 0,
+      },
+      sick: {
+        type: Number,
+        default: 0,
+      },
+      casual: {
+        type: Number,
+        default: 0,
+      },
+      compensatory: {
+        type: Number,
+        default: 0,
+      },
     },
-
     // Status
     status: {
       type: String,
@@ -139,7 +171,6 @@ const employeeSchema = new mongoose.Schema(
       default: 'Active',
       index: true,
     },
-
     // Metadata
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -153,7 +184,7 @@ const employeeSchema = new mongoose.Schema(
   {
     timestamps: true,
     collection: 'employees',
-  },
+  }
 );
 
 // Indexes
