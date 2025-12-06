@@ -7,7 +7,7 @@
 
 **Enterprise-grade API for Salary & Compensation Management System**
 
-🔗 **Frontend Repository**: [portfolix-compass-frontend](https://github.com/portfoliobuilders/portfolix-compass-frontend)
+🔗 **Frontend Repository**: [portfolix-compass-flutter](https://github.com/portfoliobuilders/portfolix-compass-flutter)
 
 ---
 
@@ -219,7 +219,7 @@ kubectl apply -f k8s/service.yaml
 
 **Email**: dev@portfoliobuilders.in  
 **Issues**: [GitHub Issues](https://github.com/portfoliobuilders/portfolix-compass-backend/issues)  
-**Frontend**: [portfolix-compass-frontend](https://github.com/portfoliobuilders/portfolix-compass-frontend)
+**Frontend**: [portfolix-compass-flutter](https://github.com/portfoliobuilders/portfolix-compass-flutter)
 
 ---
 
